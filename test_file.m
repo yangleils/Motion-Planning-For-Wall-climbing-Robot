@@ -7,31 +7,40 @@ global Joint2;
 global Joint3;
 global Joint4;
 
+% 遗传算法中的相关参数设定
 NIND = 60;                %个体数目
 MAXGEN = 500;             %最大遗传代数
 PRECI = 30;               %变量二进制位数
 NVAR = 2;                 %变量维度
 GGAP = 0.8;               %代沟
 
+% 不同Xp条件下，质心位置最优时对应的关节2/3/4角度值
+angle = zeros(100, 3);
+% 不同Xp条件下，质心位置最优时对应末端的位姿参数
+pose = zeros(100, 3);
 
-result = zeros(100, 3);
+% 不同Xp条件下，质心的最优位置
 centroid = zeros(15, 1);
+
 
 FieldD = [rep(PRECI, [1, NVAR]); [0,-90;300,270]; rep([1;0;1;1], [1, NVAR])];
 Chrom_0 = crtbp(NIND, NVAR*PRECI);
 
 % 初始化全局变量
-Xp = -235;
+Xp = -263;
+% 暂存初始值
+Xtemp = Xp;
+
 % 初始化全局变量：Joint2/Joint3/Joint4
 joint = NegativeSolution(Xp, 0, 270);
 Joint2 = joint(1);
 Joint3 = joint(2);
 Joint4 = joint(3);
 
-i = 1;                    %结果矩阵索引
-for dis = 1:10:200
-    % 更新全局变量：Xp
-    Xp = Xp + 10;
+index = 1;                    %结果矩阵索引
+
+% 求解范围： Xp-->-3  取值间隔：10mm
+for dis = 1:10:(floor(abs(Xtemp/10))+1)*10
     trace = zeros(MAXGEN, 2);
     Chrom = Chrom_0;
     variable = bs2rv(Chrom, FieldD);
@@ -51,10 +60,10 @@ for dis = 1:10:200
         if ~isreal(temp)
             temp = real(temp);
         end
+        
+        % 一个遗传算法流程中，目标值变化/优化趋势
         trace(gen, 1) = temp;
     end
-%        subplot(2,5,dis);
-%        plot(trace(:, 1));
         
         variable = bs2rv(Chrom, FieldD);
         
@@ -69,28 +78,53 @@ for dis = 1:10:200
         Joint3 = P(2);
         Joint4 = P(3);
         
-        centroid(i,:) = CenterOfMass(0, P(1), P(2), P(3));
-        result(i,:) = P; 
-        i = i + 1;
+        centroid(index,:) = CenterOfMass(0, P(1), P(2), P(3));
+        angle(index,:) = P;
+        pose(index,:) = X;
+        index = index + 1;
+        
+        % 更新全局变量：Xp
+        Xp = Xp + 10;
 end
 
-plot(centroid);
-fid = fopen('data.txt', 'w');
-[row, col] = size(result);
-row = i - 1;
+% 绘制机器人末端在不同X坐标下的Zcr曲线
+X = Xtemp:10:-3;
+plot(X, centroid);
+xlim([Xtemp, -3]);
+set(gca, 'xtick', Xtemp:20:-3);
+title(strcat('X=', int2str(Xtemp)));
+xlabel('X/mm')
+ylabel('Zcr/mm')
+
+% 保存位置序列中关节2/3/4的角度值于data.txt文件中
+fid_angle = fopen('angle.txt', 'w');
+[row, col] = size(angle);
+row = index - 1;
 for i=1:1:row
     for j=1:1:col
         if(j == col)
-            fprintf(fid, '%g\r\n', result(i, j));
+            fprintf(fid_angle, '%g\r\n', angle(i, j));
         else
-            fprintf(fid, '%g\t', result(i, j));
+            fprintf(fid_angle, '%g\t', angle(i, j));
         end
     end
 end
+fclose(fid_angle);
 
-fclose(fid);
-
-
+% 保存位置序列中，末端位姿数据于pos.txt文件中
+fid_pos = fopen('pos.txt', 'w');
+[row, col] = size(pose);
+row = index - 1;
+for i=1:1:row
+    for j=1:1:col
+        if(j == col)
+            fprintf(fid_pos, '%g\r\n', pose(i, j));
+        else
+            fprintf(fid_pos, '%g\t', pose(i, j));
+        end
+    end
+end
+fclose(fid_pos);
 
 
 
