@@ -37,13 +37,16 @@ if isreal(theta2) && isreal(theta3) && isreal(theta4)
     Ycr = (m1*yc1+m2*yc2+m3*yc3+m4*yc4)/M;
     Zcr = (m1*zc1+m2*zc2+m3*zc3+m4*zc4)/M;
     % 排除异常情况2：位置超出关节实际运动范围的解 
-    if (theta2>0 && theta2<180) && (theta3>-102 && theta3<102) && (theta4>-103 && theta4<103)
-        Y = Zcr;  
+    if (theta2>=0 && theta2<=185) && (theta3>=-96 && theta3<=96) && (theta4>=-95 && theta4<=95)
+        Y(1) = Zcr;  
     else
-        Y = 500;
+        Y(1) = 1000;
     end
+    Y(2) = Xcr;
 else
-    Y = 500;
+    Y(1) = 1000;
+    Y(2) = 1000;
+    
 end
 
 

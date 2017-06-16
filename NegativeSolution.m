@@ -19,6 +19,7 @@ c2 = (AC*AC-L2*L2-L3*L3)/(2*L2*L3);
 cb = (AC*AC+L2*L2-L3*L3)/(2*L2*AC);
 x1 = sign(x);
 x2 = x1;
+
 ta = (y-(L4*sin(r)))/(x-(L4*cos(r)));
 if (abs(ta) > 10000)                                     % alpha 异常值处理
     alpha = 90*pi/180;

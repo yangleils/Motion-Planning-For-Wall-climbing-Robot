@@ -31,13 +31,23 @@ while tmp <=row
     maxJoint = max(Joint);
   
     % 稳定性指标:Zcr           ===> 质心位置
-    Zcr = CenterOfMass(0, theta2, theta3, theta4);
     
-    % 关节移动方向限制flag 
-    if (Joint2 - theta2 >0)
-        flag = 0;
-    else
-        flag = 1;
+    temp =  CenterOfMass(0, theta2, theta3, theta4);
+    Zcr = temp(1);
+    
+    % 关节移动方向限制flag
+    flag01 = 0;   
+    if(Xp <= 0)&&(Joint2 - theta2 < 0)
+        flag01 = 1;        
+    end
+    
+    flag02 = 0;
+    if (Xp >10)
+        if ((theta2 - Joint2 >0)||(theta3 - Joint3 <0)||(theta4 - Joint4 <0))
+            flag02 = 0;
+        else
+            flag02 = 1;
+        end
     end
     
     % 适应度函数(最小化):综合各项指标   ===> 遗传算法的核心部分
@@ -45,7 +55,7 @@ while tmp <=row
     w1 = 1;
     w2 = 1;
    
-    ObjV(tmp) = w1*Zcr + w2*maxJoint + 500*flag; 
+    ObjV(tmp) = w1*Zcr + w2*maxJoint + 500*(flag01 + flag02); 
     tmp = tmp +1;
 end
 % 传出计算结果
